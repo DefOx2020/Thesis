@@ -1,0 +1,726 @@
+********************************************************************************
+****			OX94 - RISK PREDICTION MODEL CTYA CANCERS				   ***** 
+********************************************************************************
+
+**Stata v17
+
+********************************************************************************
+*     TABLE OF CONTENTS: 
+*			Cohort Generation
+*			Multiple Imputation (example provided for blood_cancer outcome)
+*			Model Development   (example provided for blood_cancer outcome)
+*			Model Validation    (example provided for blood_cancer outcome)
+*			Model Heterogeneity (example provided for blood_cancer outcome)
+*			Model Performance by groups 
+*			Decision Curve Analysis 
+********************************************************************************
+
+
+*******************************************************************************
+***********				COHORT GENERATION 							***********
+*******************************************************************************
+use"P:\OX94\data\OX94_full_cohort_final.dta", clear
+
+**1) Generate entry and exit conditions
+
+**entry date (first recorded cancer relevant symptom or if no symptom recorded, date of entry to cohort)
+gen entry_date_symptom=min(effectivedatetime_organomegaly, effectivedatetime_pruritus, effectivedatetime_lympho, effectivedatetime_fever_v2,  effectivedatetime_limb_v2, effectivedatetime_joint_v2, effectivedatetime_limp_v2, effectivedatetime_anpa_v2, effectivedatetime_tired_v2, effectivedatetime_abdop_v2, effectivedatetime_rash_v2, effectivedatetime_skin_v2,  effectivedatetime_cp, effectivedatetime_cough, effectivedatetime_breathless, effectivedatetime_headache_v2, effectivedatetime_bruise_v2, effectivedatetime_vomit_v2, effectivedatetime_hepatomegaly, effectivedatetime_splenomegaly, effectivedatetime_hsm, effectivedatetime_abdomass,  effectivedatetime_hn_lump,effectivedatetime_other_lump, effectivedatetime_wl,  effectivedatetime_tort, effectivedatetime_unwell, effectivedatetime_gait, effectivedatetime_dizz, effectivedatetime_haematuria, effectivedatetime_hemipa, effectivedatetime_constipation, effectivedatetime_pap, effectivedatetime_puberty, effectivedatetime_seizure, effectivedatetime_testicular_s, effectivedatetime_gait, effectivedatetime_acuity, effectivedatetime_squint)
+format entry_date_symptom %td
+gen entry_date_final=max(entry_date_symptom, enter3)
+sort entry_date_final
+format entry_date_final %td
+
+
+**exit date (6 months following entry with relevant symptom or study end date)
+
+gen exit_cohort=entry_date_final+183
+gen exit_cohort_min=min(exit_cohort, exit_final)
+sort exit_cohort_min
+format exit_cohort_min %td
+
+
+**2) remove those who entered after their exit date 
+drop if entry_date_final>=exit_cohort_min
+tab sex1
+tab cancer_type 
+
+**3) remove cancers before entry date
+
+gen crem=0
+replace crem=1 if any_cancer_source==1 & cancer_date_all<=entry_date_final
+drop if crem==1
+drop crem
+
+tab sex1
+tab cancer_type
+
+**4) remove cancers after exit date
+gen crem1=0 
+replace crem1=1 if  any_cancer_source==1 & cancer_date_all>=exit_cohort_min
+drop if crem1==1
+drop crem1
+
+tab sex1
+tab cancer_type
+
+**5) remove any CTYA who does not have min 6 months of follow up 
+gen followup=exit_cohort_min-entry_date_final
+gen follow=0
+replace follow=1 if followup<183 
+drop if follow==1 
+drop follow 
+
+
+**6) remove candidate variables (i.e., make them null) that occur after exit or before entry 
+
+
+rename (organomegaly lympho fever urti limb joint limp anpa tired abdop anorexia rash skin hnp hns cl resp chest_pain cough breathless headache bruise vomit hepatomegaly splenomegaly hepatosplenomegaly abdomass hn_lump other_lump wl_v2 pruritus  pap macro hemi_v2 hemipa tort squint eye acuity diplopia exopthalmos behaviour irritability delay voice cranial seizure puberty gait haematuria unwell constipation testicular_s dizz syncope hb wcc plts_units neutro lymphocyte monocyte basophil eosinophil mcv mchc mch rdw crp esr ferritin ldh mpv nrbc alp ebv transaminase albumin bilirubin) (symptom_1 symptom_2  symptom_3 symptom_4 symptom_5 symptom_6 symptom_7 symptom_8 symptom_9 symptom_10 symptom_11 symptom_12 symptom_13 symptom_14 symptom_15 symptom_16 symptom_17 symptom_18 symptom_19 symptom_20 symptom_21 symptom_22 symptom_23 symptom_24 symptom_25 symptom_26 symptom_27  symptom_29 symptom_30 symptom_31 symptom_32 symptom_33 symptom_34 symptom_35 symptom_36 symptom_37 symptom_38 symptom_39 symptom_40 symptom_41 symptom_42 symptom_43 symptom_44 symptom_45 symptom_46 symptom_47 symptom_48 symptom_49 symptom_50 symptom_51 symptom_52 symptom_53 symptom_54 symptom_55 symptom_56 symptom_57 symptom_58 symptom_59 symptom_60 symptom_61 symptom_62 symptom_63 symptom_64 symptom_65 symptom_66 symptom_67 symptom_68 symptom_69 symptom_70 symptom_71 symptom_72 symptom_73 symptom_74 symptom_75 symptom_76 symptom_77 symptom_78 symptom_79)
+
+rename (effectivedatetime_organomegaly effectivedatetime_lympho effectivedatetime_fever effectivedatetime_urti effectivedatetime_limb effectivedatetime_joint effectivedatetime_limp effectivedatetime_anpa effectivedatetime_tired effectivedatetime_abdop effectivedatetime_anorexia effectivedatetime_rash effectivedatetime_skin effectivedatetime_hnp effectivedatetime_hns effectivedatetime_cl effectivedatetime_resp effectivedatetime_cp effectivedatetime_cough effectivedatetime_breathless effectivedatetime_headache effectivedatetime_bruise effectivedatetime_vomit effectivedatetime_hepatomegaly effectivedatetime_splenomegaly effectivedatetime_hsm effectivedatetime_abdomass effectivedatetime_hn_lump effectivedatetime_other_lump effectivedatetime_wl effectivedatetime_pruritus  effectivedatetime_pap effectivedatetime_macro effectivedatetime_hemi effectivedatetime_hemipa effectivedatetime_tort effectivedatetime_squint effectivedatetime_eye effectivedatetime_acuity effectivedatetime_diplopia effectivedatetime_exopthalmos effectivedatetime_behaviour effectivedatetime_irritability effectivedatetime_delay effectivedatetime_voice effectivedatetime_cranial effectivedatetime_seizure effectivedatetime_puberty effectivedatetime_gait effectivedatetime_haematuria effectivedatetime_unwell effectivedatetime_constipation effectivedatetime_testicular_s effectivedatetime_dizz effectivedatetime_syncope effectivedatetime_hb effectivedatetime_wcc effectivedatetime_plts effectivedatetime_neutro effectivedatetime_lymphocyte effectivedatetime_monocyte effectivedatetime_basophil effectivedatetime_eosinophil effectivedatetime_mcv effectivedatetime_mchc effectivedatetime_mch effectivedatetime_rdw effectivedatetime_crp effectivedatetime_esr effectivedatetime_ferritin effectivedatetime_ldh effectivedatetime_mpv effectivedatetime_nrbc effectivedatetime_alp effectivedatetime_ebv effectivedatetime_transaminase effectivedatetime_albumin effectivedatetime_bilirubin) (effectivedatetime_1 effectivedatetime_2  effectivedatetime_3 effectivedatetime_4 effectivedatetime_5 effectivedatetime_6 effectivedatetime_7 effectivedatetime_8 effectivedatetime_9 effectivedatetime_10 effectivedatetime_11 effectivedatetime_12 effectivedatetime_13 effectivedatetime_14 effectivedatetime_15 effectivedatetime_16 effectivedatetime_17 effectivedatetime_18 effectivedatetime_19 effectivedatetime_20 effectivedatetime_21 effectivedatetime_22 effectivedatetime_23 effectivedatetime_24 effectivedatetime_25 effectivedatetime_26 effectivedatetime_27  effectivedatetime_29 effectivedatetime_30 effectivedatetime_31 effectivedatetime_32 effectivedatetime_33 effectivedatetime_34 effectivedatetime_35 effectivedatetime_36 effectivedatetime_37 effectivedatetime_38 effectivedatetime_39 effectivedatetime_40 effectivedatetime_41 effectivedatetime_42 effectivedatetime_43 effectivedatetime_44 effectivedatetime_45 effectivedatetime_46 effectivedatetime_47 effectivedatetime_48 effectivedatetime_49 effectivedatetime_50 effectivedatetime_51 effectivedatetime_52 effectivedatetime_53 effectivedatetime_54 effectivedatetime_55 effectivedatetime_56 effectivedatetime_57 effectivedatetime_58 effectivedatetime_59 effectivedatetime_60 effectivedatetime_61 effectivedatetime_62 effectivedatetime_63 effectivedatetime_64 effectivedatetime_65 effectivedatetime_66 effectivedatetime_67 effectivedatetime_68 effectivedatetime_69 effectivedatetime_70 effectivedatetime_71 effectivedatetime_72 effectivedatetime_73 effectivedatetime_74 effectivedatetime_75 effectivedatetime_76 effectivedatetime_77 effectivedatetime_78 effectivedatetime_79 )
+
+rename (hb_value wcc_value plts_value neutro_value lymphocyte_value monocyte_value basophil_value eosinophil_value mcv_value mchc_value mch_value rdw_value crp_value esr_value ferritin_value ldh_value mpv_value nrbc_value alp_value ebv_value transaminase_value albumin_value  bilirubin_value) ( symptom_value_57 symptom_value_58 symptom_value_59 symptom_value_60 symptom_value_61 symptom_value_62 symptom_value_63 symptom_value_64 symptom_value_65 symptom_value_66 symptom_value_67 symptom_value_68 symptom_value_69 symptom_value_70 symptom_value_71 symptom_value_72 symptom_value_73 symptom_value_74 symptom_value_75 symptom_value_76 symptom_value_77 symptom_value_78 symptom_value_79)
+
+
+global n 79
+
+forval x=1/$n {
+	
+	replace symptom_`x'=0 if effectivedatetime_`x'>=exit_cohort_min
+	
+	replace symptom_`x'=0 if effectivedatetime_`x'<=entry_date_final
+	
+}
+
+
+global n 79
+
+forval x=57/$n {
+replace symptom_value_`x'=. if effectivedatetime_`x'>=exit_cohort_min
+replace symptom_value_`x'=. if effectivedatetime_`x'<=entry_date_final
+}
+
+
+rename (symptom_1 symptom_2  symptom_3 symptom_4 symptom_5 symptom_6 symptom_7 symptom_8 symptom_9 symptom_10 symptom_11 symptom_12 symptom_13 symptom_14 symptom_15 symptom_16 symptom_17 symptom_18 symptom_19 symptom_20 symptom_21 symptom_22 symptom_23 symptom_24 symptom_25 symptom_26 symptom_27  symptom_29 symptom_30 symptom_31 symptom_32 symptom_33 symptom_34 symptom_35 symptom_36 symptom_37 symptom_38 symptom_39 symptom_40 symptom_41 symptom_42 symptom_43 symptom_44 symptom_45 symptom_46 symptom_47 symptom_48 symptom_49 symptom_50 symptom_51 symptom_52 symptom_53 symptom_54 symptom_55 symptom_56 symptom_57 symptom_58 symptom_59 symptom_60 symptom_61 symptom_62 symptom_63 symptom_64 symptom_65 symptom_66 symptom_67 symptom_68 symptom_69 symptom_70 symptom_71 symptom_72 symptom_73 symptom_74 symptom_75 symptom_76 symptom_77 symptom_78 symptom_79) (organomegaly lympho fever urti limb joint limp anpa tired abdop anorexia rash skin hnp hns cl resp chest_pain cough breathless headache bruise vomit hepatomegaly splenomegaly hepatosplenomegaly abdomass hn_lump other_lump wl_v2 pruritus  pap macro hemi_v2 hemipa tort squint eye acuity diplopia exopthalmos behaviour irritability delay voice cranial seizure puberty gait haematuria unwell constipation testicular_s dizz syncope hb wcc plts_units neutro lymphocyte monocyte basophil eosinophil mcv mchc mch rdw crp esr ferritin ldh mpv nrbc alp ebv transaminase albumin bilirubin) 
+
+rename (effectivedatetime_1 effectivedatetime_2  effectivedatetime_3 effectivedatetime_4 effectivedatetime_5 effectivedatetime_6 effectivedatetime_7 effectivedatetime_8 effectivedatetime_9 effectivedatetime_10 effectivedatetime_11 effectivedatetime_12 effectivedatetime_13 effectivedatetime_14 effectivedatetime_15 effectivedatetime_16 effectivedatetime_17 effectivedatetime_18 effectivedatetime_19 effectivedatetime_20 effectivedatetime_21 effectivedatetime_22 effectivedatetime_23 effectivedatetime_24 effectivedatetime_25 effectivedatetime_26 effectivedatetime_27  effectivedatetime_29 effectivedatetime_30 effectivedatetime_31 effectivedatetime_32 effectivedatetime_33 effectivedatetime_34 effectivedatetime_35 effectivedatetime_36 effectivedatetime_37 effectivedatetime_38 effectivedatetime_39 effectivedatetime_40 effectivedatetime_41 effectivedatetime_42 effectivedatetime_43 effectivedatetime_44 effectivedatetime_45 effectivedatetime_46 effectivedatetime_47 effectivedatetime_48 effectivedatetime_49 effectivedatetime_50 effectivedatetime_51 effectivedatetime_52 effectivedatetime_53 effectivedatetime_54 effectivedatetime_55 effectivedatetime_56 effectivedatetime_57 effectivedatetime_58 effectivedatetime_59 effectivedatetime_60 effectivedatetime_61 effectivedatetime_62 effectivedatetime_63 effectivedatetime_64 effectivedatetime_65 effectivedatetime_66 effectivedatetime_67 effectivedatetime_68 effectivedatetime_69 effectivedatetime_70 effectivedatetime_71 effectivedatetime_72 effectivedatetime_73 effectivedatetime_74 effectivedatetime_75 effectivedatetime_76 effectivedatetime_77 effectivedatetime_78 effectivedatetime_79 ) (effectivedatetime_organomegaly effectivedatetime_lympho effectivedatetime_fever effectivedatetime_urti effectivedatetime_limb effectivedatetime_joint effectivedatetime_limp effectivedatetime_anpa effectivedatetime_tired effectivedatetime_abdop effectivedatetime_anorexia effectivedatetime_rash effectivedatetime_skin effectivedatetime_hnp effectivedatetime_hns effectivedatetime_cl effectivedatetime_resp effectivedatetime_cp effectivedatetime_cough effectivedatetime_breathless effectivedatetime_headache effectivedatetime_bruise effectivedatetime_vomit effectivedatetime_hepatomegaly effectivedatetime_splenomegaly effectivedatetime_hsm effectivedatetime_abdomass effectivedatetime_hn_lump effectivedatetime_other_lump effectivedatetime_wl effectivedatetime_pruritus  effectivedatetime_pap effectivedatetime_macro effectivedatetime_hemi effectivedatetime_hemipa effectivedatetime_tort effectivedatetime_squint effectivedatetime_eye effectivedatetime_acuity effectivedatetime_diplopia effectivedatetime_exopthalmos effectivedatetime_behaviour effectivedatetime_irritability effectivedatetime_delay effectivedatetime_voice effectivedatetime_cranial effectivedatetime_seizure effectivedatetime_puberty effectivedatetime_gait effectivedatetime_haematuria effectivedatetime_unwell effectivedatetime_constipation effectivedatetime_testicular_s effectivedatetime_dizz effectivedatetime_syncope effectivedatetime_hb effectivedatetime_wcc effectivedatetime_plts effectivedatetime_neutro effectivedatetime_lymphocyte effectivedatetime_monocyte effectivedatetime_basophil effectivedatetime_eosinophil effectivedatetime_mcv effectivedatetime_mchc effectivedatetime_mch effectivedatetime_rdw effectivedatetime_crp effectivedatetime_esr effectivedatetime_ferritin effectivedatetime_ldh effectivedatetime_mpv effectivedatetime_nrbc effectivedatetime_alp effectivedatetime_ebv effectivedatetime_transaminase effectivedatetime_albumin effectivedatetime_bilirubin) 
+
+rename ( symptom_value_57 symptom_value_58 symptom_value_59 symptom_value_60 symptom_value_61 symptom_value_62 symptom_value_63 symptom_value_64 symptom_value_65 symptom_value_66 symptom_value_67 symptom_value_68 symptom_value_69 symptom_value_70 symptom_value_71 symptom_value_72 symptom_value_73 symptom_value_74 symptom_value_75 symptom_value_76 symptom_value_77 symptom_value_78 symptom_value_79) (hb_value wcc_value plts_value neutro_value lymphocyte_value monocyte_value basophil_value eosinophil_value mcv_value mchc_value mch_value rdw_value crp_value esr_value ferritin_value ldh_value mpv_value nrbc_value alp_value ebv_value transaminase_value albumin_value  bilirubin_value) 
+
+
+**6) define abnormal blood test results
+
+gen hb_h=0
+replace hb_h=1 if hb_value>17 & hb_value!=.
+
+gen hb_l=0
+replace hb_l=1 if hb_value<12 & hb_value!=.
+
+gen plt_h=0
+replace plt_h=1 if plts_value>400 & plts_value!=.
+gen plt_l=0
+replace plt_l=1 if plts_value<150 & plts_value!=.
+
+gen neut_h=0
+replace neut_h=1 if neutro_value>8 & neutro_value!=.
+gen neut_l=0
+replace neut_l=1 if neutro_value<1.5 & neutro_value!=.
+
+gen lymphocyte_h=0
+replace lymphocyte_h=1 if lymphocyte_value>4.5 & lymphocyte_value!=.
+gen lymphocyte_l=0
+replace lymphocyte_l=1 if lymphocyte_value<1.1 & lymphocyte_value!=.
+
+gen basophil_abn=0
+replace basophil_abn=1 if basophil_value>0.21 & basophil_value!=.
+
+gen monocyte_h=0
+replace monocyte_h=1 if monocyte_value>1 & monocyte_value!=.
+gen monocyte_l=0
+replace monocyte_l=1 if monocyte_value<0.2 & monocyte_value!=.
+
+gen eosinophil_abn=0
+replace eosinophil_abn=1 if eosinophil_value>0.81 & eosinophil_value!=.
+
+gen crp_abn=0
+replace crp_abn=1 if crp_value>5 & crp_value!=.
+
+gen esr_abn=0 
+replace esr_abn=1 if esr_value>20 & esr_value!=.
+
+gen ferritin_abn=0 
+replace ferritin_abn=1 if ferritin_value>400 & ferritin_value!=.
+
+gen mcv_abn=0
+replace mcv_abn=1 if mcv_value>96 & mcv_value!=.
+
+gen ldh_abn=0
+replace ldh_abn=1 if ldh_value>900 & ldh_value!=.
+
+gen alp_abn=0
+replace alp_abn=1 if alp_value>250 & alp_value!=.
+
+gen transaminase_abn=0
+replace transaminase_abn=1 if transaminase_value>60 & transaminase_value!=.
+
+gen albumin_abn=0
+replace albumin_abn=1 if albumin_value<35 & albumin_value!=.
+
+
+save "P:\OX94\data\OX94_LR_model_24_X.dta", replace //separately for blood cancers (leukaemias/lymphomas) and solid cancers (CNS tumours, sarcomas, abdominal tumours, gonadal germ cell tumours)
+
+
+*******************************************************************************
+***********				MULTIPLE IMPUTATION 							********
+*******************************************************************************
+
+**1) Prior to imputation generate fractional polynomial of continuous variable (only continuous variable is age-at-diagnosis)
+
+mfp: logit blood_cancer age_exit 
+
+**2) Check continous variables for normality
+
+histogram age_exit, percent normal // looks normal 
+
+**3) Quantify degree of missingness of incomplete data
+
+tab ethnic_2cat, m 
+tab town_quint, m  
+
+**4) set up mi model 
+
+mi set wide 
+
+mi register imputed ethnic_2cat town_quint 
+
+
+timer clear 
+timer on 1 
+
+
+	mi impute chained (mlogit)ethnic_2cat (ologit)town_quint  = blood_cancer i.organomegaly i.lympho i.fever i.limb i.joint i.limp i.anpa i.tired i.abdop i.rash i.skin i.chest_pain i.cough i.breathless i.vomit i.bruise i.hn_lump i.other_lump i.wl i.pruritus i.hb_l i.hb_h i.plt_l i.plt_h  i.neut_l i.neut_h i.lymphocyte_l i.lymphocyte_h i.basophil_abn i.monocyte_h i.monocyte_l i.esr_abn i.eosinophil_abn i.crp_abn i.ferritin_abn i.mcv_abn i.ldh_abn i.sex age_exit, rseed(2526) dots add(5) augment	//includes outcome
+
+
+timer off 1 
+timer list 
+
+
+
+//5) fractional polynomials derived pre imputation to be registered as passive 
+
+mi passive: gen double age_imp_1 = ((age_exit/10)^-2)-.3740488595 
+mi passive: gen double age_imp_2 = (age_exit/10)^-2*ln(age_exit/10)-.1839139984 
+mi register regular age_imp_1 age_imp_2
+
+
+save "P:\OX94\data\OX94_blood_model_imputed.dta", replace
+
+
+*******************************************************************************
+***********				MODEL DEVELOPMENT 							********
+*******************************************************************************
+
+**1) run full model to apply conditions
+mi estimate, or dots: logit blood_cancer i.organomegaly i.lympho i.fever i.limb  i.anpa i.tired i.abdop i.rash i.chest_pain i.headache i.vomit i.bruise i.hn_lump i.other_lump i.cough i.breathless i.wl i.pruritus i.sex i.town_quint i.ethnic_2cat age_imp_1 age_imp_2 i.fever#i.cough i.fever#i.lympho  i.hb_l i.neut_l i.neut_h i.lymphocyte_l i.lymphocyte_h i.monocyte_h i.monocyte_l i.plt_h i.plt_l i.basophil_abn i.eosinophil_abn i.crp_abn i.esr_abn i.mcv_abn i.ldh_abn i.ferritin_abn, vce(cluster study_practice)
+
+**2) run the final model 
+
+mi estimate, or dots errorok saving(mi_derivation_blood, replace): logit blood_cancer i.organomegaly i.lympho i.fever i.limb  i.anpa  i.abdop  i.chest_pain  i.bruise i.hn_lump i.other_lump i.pruritus i.sex age_imp_1 age_imp_2 i.fever#i.lympho i.hb_l i.neut_l i.neut_h i.plt_l i.crp_abn i.esr_abn i.mcv_abn i.ferritin_abn, vce(cluster study_practice)
+
+mi predict xb using mi_derivation_blood, xb
+
+
+save "P:\OX94\data\OX94_LR_blood_derivation_MI.dta", replace
+
+**3) apparent performance measures of derived model 
+
+use "P:\OX94\data\OX94_LR_blood_derivation_MI.dta", clear
+
+**3.1) ROC 
+mi convert flong
+
+mi xeq 0: roctab blood_cancer xb
+return list 
+
+cap program drop eroctab 
+program eroctab, eclass
+
+args refvar classvar 
+roctab `refvar' `classvar'
+tempname b V
+mat `b' = r(area)
+mat `V' = r(se)^2
+local N= r(N)
+
+mat colnames `b' = AUC
+mat colnames `V' = AUC
+mat rownames `V' = AUC
+
+ereturn post `b' `V', obs (`N')
+ereturn local cmd "eroctab"
+ereturn local title "ROC area"
+end 
+
+mi estimate, cmdok: eroctab blood_cancer xb 
+
+
+**3.2) Calibration 
+
+use "P:\OX94\data\OX94_LR_blood_derivation_MI.dta", clear
+
+// calibration slope
+
+mi estimate, dots errorok saving(mi_iecv_cal_blood, replace): logit blood_cancer xb // 1 as expected 
+
+// calibration in the large
+
+mi estimate, dots errorok saving(mi_iecv_cal_2_blood, replace): logit blood_cancer, ofset(xb) coef
+
+
+
+*******************************************************************************
+***********				MODEL VALIDATION 							********
+*******************************************************************************
+
+use "P:\OX94\data\OX94_LR_blood_derivation_MI.dta", clear
+
+
+**1) convert to long so each imputation model runs 
+mi convert flong
+
+**2) generate new variables to hold out predictions
+gen iecv_xb=.
+global covariates "i.organomegaly i.lympho i.fever i.limb  i.anpa  i.abdop  i.chest_pain  i.bruise i.hn_lump i.other_lump i.pruritus i.sex age_imp_1 age_imp_2 i.fever#i.lympho i.hb_l i.neut_l i.neut_h i.lymphocyte_h i.plt_l i.crp_abn i.esr_abn i.mcv_abn i.ferritin_abn"
+forval x= 1(1)10 {	
+mi estimate, or dots errorok saving(mi_iecv_valid_blood, replace): logit blood_cancer $covariates if sha1!=`x', vce(cluster study_practice)
+mi predict xb if sha1==`x' using mi_iecv_valid_blood, xb storecompleted 
+replace iecv_xb=xb if iecv_xb==. 
+drop xb
+display `x'
+
+}
+summ iecv_xb, det 
+histogram iecv_xb
+count if iecv_xb==.
+
+save "P:\OX94\data\OX94_LR_blood_validation.dta",replace
+
+
+
+
+**3) model performance post IECV 
+**3.1) Discrimination 
+
+use "P:\OX94\data\OX94_LR_blood_validation.dta", clear
+
+
+mi xeq 0: roctab blood_cancer iecv_xb
+
+
+cap program drop eroctab 
+program eroctab, eclass
+
+args refvar classvar 
+roctab `refvar' `classvar'
+tempname b V
+mat `b' = r(area)
+mat `V' = r(se)^2
+local N= r(N)
+
+mat colnames `b' = AUC
+mat colnames `V' = AUC
+mat rownames `V' = AUC
+
+ereturn post `b' `V', obs (`N')
+ereturn local cmd "eroctab"
+ereturn local title "ROC area"
+end 
+
+
+mi estimate, cmdok dots: eroctab blood_cancer iecv_xb 
+
+**3.2) Calibration (in-the-large, slope)
+mi estimate, dots: logit blood_cancer, offset(iecv_xb) coef 
+mi estimate, dots: logit blood_cancer iecv_xb, coef
+
+**3.3) Calibration plot 
+
+use "P:\OX94\data\OX94_LR_blood_validation.dta", clear
+mi passive: gen iecv_pr=invlogit(iecv_xb)
+save "P:\OX94\data\OX94_LR_blood_pmcalplot.dta",replace
+mi convert wide 
+pmcalplot iecv_pr blood_cancer, ci zoom nostatistics nospike keep name(calibration_plot_blood, replace)
+save "P:\OX94\data\OX94_LR_blood_pmcalplot_final.dta",replace
+
+
+
+*******************************************************************************
+***********				MODEL HETEROGENEITY							********
+*******************************************************************************
+
+use "P:\OX94\data\OX94_LR_blood_validation.dta", clear
+cd "P:\OX94\OX94_backup_Dec_2023\OX94_RERUN\data\"
+
+**1) ROC
+
+mi xeq 0: roctab blood_cancer iecv_xb
+
+cap program drop eroctab 
+program eroctab, eclass properties(mi)
+
+
+args refvar classvar 
+roctab `refvar' `classvar'
+tempname b V
+mat `b' = r(area)
+mat `V' = r(se)^2
+local N= r(N)
+
+mat colnames `b' = AUC
+mat colnames `V' = AUC
+mat rownames `V' = AUC
+
+ereturn post `b' `V', obs (`N')
+ereturn local cmd "eroctab"
+ereturn local title "ROC area"
+end 
+
+capture postutil clear 
+tempname AUC_blood_correct_24
+postfile `AUC_blood_correct_24' beta st_err val_size using AUC_blood_correct_24.dta, replace
+
+forval x=1/10 {
+	preserve
+	keep if sha1==`x'
+	mi estimate, dots: eroctab blood_cancer iecv_xb 
+	local beta=r(table)[1,1]
+	local st_err=r(table)[2,1]
+	local val_size=e(N)
+	post `AUC_blood_correct_24' (`beta') (`st_err') (`val_size')
+	restore
+}
+
+postclose `AUC_blood_correct_24'
+
+**2) c-slope
+capture postutil clear 
+tempname slope_blood_correct_24
+postfile `slope_blood_correct_24' slope slope_st_err val_size using slope_blood_correct_24.dta, replace
+
+forval x=1/10 {
+	mi estimate, cmdok dots: logit blood_cancer iecv_xb if sha1==`x'
+	local slope= r(table)[1,1]
+	local slope_st_err= r(table)[2,1]
+	local val_size=e(N)
+	post `slope_blood_correct_24' (`slope') (`slope_st_err') (`val_size')
+}
+
+postclose `slope_blood_correct_24'
+
+
+**3) c-calib
+capture postutil clear 
+tempname calib_blood_correct_24
+postfile `calib_blood_correct_24' calib calib_st_err val_size using calib_blood_correct_24.dta, replace
+
+forval x=1/10 {
+	mi estimate, cmdok dots: logit blood_cancer iecv_xb if sha1==`x', offset(iecv_xb)
+	local calib= r(table)[1,1]
+	local calib_st_err= r(table)[2,1]
+	local val_size=e(N)
+	post `calib_blood_correct_24' (`calib') (`calib_st_err') (`val_size')
+}
+
+postclose `calib_blood_correct_24'
+
+
+
+
+// meta analysis 
+
+
+use "AUC_blood_correct_24.dta",clear
+
+input str50 region
+"East Midlands"
+"East of England"
+"London"
+"North East"
+"North West"
+"South Central"
+"South East"
+"South West"
+"West Midlands"
+"Yorkshire & Humber"
+end 
+
+meta set beta st_err, studylab(region)
+meta summarize, random(sjonkman) se(khartung) predinterval(95)
+meta forestplot, random(sjonkman) se(khartung) predinterval(95) xline(0.5)
+graph save "Graph" "\\AUC_blood.gph", replace
+clear 
+
+use "slope_blood_correct_24.dta",clear
+
+input str50 region
+"East Midlands"
+"East of England"
+"London"
+"North East"
+"North West"
+"South Central"
+"South East"
+"South West"
+"West Midlands"
+"Yorkshire & Humber"
+end 
+
+meta set slope slope_st_err, studylab(region)
+meta summarize, random(sjonkman) se(khartung) predinterval(95)
+meta forestplot, random(sjonkman) se(khartung) predinterval(95) xline(0.5)
+graph save "Graph" "\\slope_blood.gph", replace
+clear 
+
+use "calib_blood_correct_24.dta",clear
+
+input str50 region
+"East Midlands"
+"East of England"
+"London"
+"North East"
+"North West"
+"South Central"
+"South East"
+"South West"
+"West Midlands"
+"Yorkshire & Humber"
+end 
+
+meta set calib calib_st_err, studylab(region)
+meta summarize, random(sjonkman) se(khartung) predinterval(95)
+meta forestplot, random(sjonkman) se(khartung) predinterval(95) xline(0.5)
+graph save "Graph" "\\calib_blood.gph", replace
+clear 
+
+// meta regression
+
+
+use "P:\OX94\data\OX94_LR_blood_validation.dta", clear
+
+mi passive: gen age_group=1 if age_exit<15 
+mi passive: replace age_group=2 if age_exit>14 & age_exit<26
+
+collapse (percent)age_group town_quint ethnic_2cat, by(sha1)
+
+tab age_group
+tab town_quint
+
+save "P:\OX94\data\OX94_LR_blood_metaregression.dta",replace
+
+use "AUC_blood_correct_24.dta",clear
+gen sha1=_n 
+merge 1:1 sha1 using "P:\OX94\data\OX94_LR_blood_metaregression.dta"
+
+meta set beta st_err, studylab(sha1)
+
+meta regress age_group ethnic_2cat town_quint, random(sjonkman) se(khartung) 
+
+meta regress age_group , random(sjonkman) 
+estat bubbleplot
+
+meta regress ethnic_2cat , random(sjonkman) 
+estat bubbleplot
+
+meta regress town_quint , random(sjonkman) 
+estat bubbleplot
+
+use "slope_blood_correct_24.dta",clear
+gen sha1=_n 
+merge 1:1 sha1 using "P:\OX94\data\OX94_LR_blood_metaregression.dta"
+
+meta set slope slope_st_err, studylab(sha1)
+
+meta regress age_group ethnic_2cat town_quint, random(sjonkman) se(khartung) 
+
+meta regress age_group , random(sjonkman) 
+estat bubbleplot
+
+meta regress ethnic_2cat , random(sjonkman) 
+estat bubbleplot
+
+meta regress town_quint , random(sjonkman) 
+estat bubbleplot
+
+
+use "calib_blood_correct_24.dta",clear
+gen sha1=_n 
+merge 1:1 sha1 using "P:\OX94\data\OX94_LR_blood_metaregression.dta"
+
+meta set calib calib_st_err, studylab(sha1)
+
+meta regress age_group ethnic_2cat town_quint, random(sjonkman) se(khartung) 
+
+meta regress age_group , random(sjonkman) 
+estat bubbleplot
+
+meta regress ethnic_2cat , random(sjonkman) 
+estat bubbleplot
+
+meta regress town_quint , random(sjonkman) 
+estat bubbleplot
+
+
+*******************************************************************************
+***********				MODEL PERFORMANCE BY GROUPS						*******
+*******************************************************************************
+
+**1) Age Group Performance
+
+use "P:\OX94\data\OX94_LR_blood_validation.dta", clear
+
+mi passive: gen age_group=1 if age_exit<15 
+mi passive: replace age_group=2 if age_exit>14 & age_exit<26
+
+forval x=1/2 {
+preserve
+drop if age_group==`x'
+
+mi xeq 0: roctab blood_cancer iecv_xb
+ 
+cap program drop eroctab 
+program eroctab, eclass
+
+args refvar classvar 
+roctab `refvar' `classvar'
+tempname b V
+mat `b' = r(area)
+mat `V' = r(se)^2
+local N= r(N)
+
+mat colnames `b' = AUC
+mat colnames `V' = AUC
+mat rownames `V' = AUC
+
+ereturn post `b' `V', obs (`N')
+ereturn local cmd "eroctab"
+ereturn local title "ROC area"
+end 
+
+
+mi estimate, cmdok dots: eroctab blood_cancer iecv_xb 
+
+**Calibration (in-the-large, slope, plot)
+mi estimate, dots: logit blood_cancer, offset(iecv_xb) coef 
+mi estimate, dots: logit blood_cancer iecv_xb, coef 
+
+restore
+
+}
+
+
+
+**2) Performance by sex
+
+use "P:\OX94\data\OX94_LR_blood_validation.dta", clear
+
+forval x=0/1 {
+preserve
+drop if sex1==`x'
+
+mi xeq 0: roctab blood_cancer iecv_xb
+return list 
+
+cap program drop eroctab 
+program eroctab, eclass
+
+args refvar classvar 
+roctab `refvar' `classvar'
+tempname b V
+mat `b' = r(area)
+mat `V' = r(se)^2
+local N= r(N)
+
+mat colnames `b' = AUC
+mat colnames `V' = AUC
+mat rownames `V' = AUC
+
+ereturn post `b' `V', obs (`N')
+ereturn local cmd "eroctab"
+ereturn local title "ROC area"
+end 
+
+
+mi estimate, cmdok dots: eroctab blood_cancer iecv_xb 
+
+**Calibration (in-the-large, slope, plot)
+mi estimate, dots: logit blood_cancer, offset(iecv_xb) coef 
+mi estimate, dots: logit blood_cancer iecv_xb, coef 
+
+restore
+
+}
+
+**3) Performance by ethnic group
+
+use "P:\OX94\data\OX94_LR_blood_validation.dta", clear
+
+forval x=0/1 {
+preserve
+drop if ethnic_2cat==`x'
+
+mi xeq 0: roctab blood_cancer iecv_xb
+return list 
+
+cap program drop eroctab 
+program eroctab, eclass
+
+args refvar classvar 
+roctab `refvar' `classvar'
+tempname b V
+mat `b' = r(area)
+mat `V' = r(se)^2
+local N= r(N)
+
+mat colnames `b' = AUC
+mat colnames `V' = AUC
+mat rownames `V' = AUC
+
+ereturn post `b' `V', obs (`N')
+ereturn local cmd "eroctab"
+ereturn local title "ROC area"
+end 
+
+
+mi estimate, cmdok dots: eroctab blood_cancer iecv_xb 
+
+**Calibration (in-the-large, slope, plot)
+mi estimate, dots: logit blood_cancer, offset(iecv_xb) coef 
+mi estimate, dots: logit blood_cancer iecv_xb, coef 
+
+restore
+
+}
+
+
+*******************************************************************************
+***********				DECISION CURVE ANALYSIS							*******
+*******************************************************************************
+
+use"P:\OX94\data\OX94_LR_blood_validation_symptom_only.dta", clear
+mi convert wide
+
+keep patid iecv_pr_b_so
+
+
+save "P:\OX94\data\OX94_LR_blood_mini_preds_so.dta", replace
+
+
+use "P:\OX94\data\OX94_LR_blood_validation_wide.dta", clear 
+
+
+merge 1:1 patid using "P:\OX94\data\OX94_LR_blood_mini_preds_so.dta"
+
+
+dca blood_cancer iecv_pr iecv_pr_b_so, prob(yes yes) xstart(0.0000001) xby(0.000001) xstop(0.005) ymin(-0.00009)
+
+
+
