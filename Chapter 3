@@ -1,0 +1,173 @@
+************************************************************************************
+* Project: Do Files Thesis - Case control study
+* Author: Defne Saatci
+* Date: 31/08/2024
+* Version: final
+*      
+*				        
+********************************************************************************
+
+
+
+********************************************************************************
+*     TABLE OF CONTENTS: 
+*			1) Generate case-control from full cohort (nested)
+*			2) Carry out univariable and multivariable conditional logistic regression
+*			3) Diagnostic interval generation
+*			4) Multiple imputation
+********************************************************************************
+
+********************************************************************************
+*      		 1 GENERATION OF CASE CONTROL POPULATION                  *
+********************************************************************************
+
+use "P:\OX94\OX94_backup_Dec_2023\OX94_RERUN\data\OX94_cohort_all.dta", clear
+
+// 1) generate gp practice with at least 1 case 
+gen case=1 if any_cancer_source==1		
+	tab case
+	collapse (sum) case, by(study_practice)
+	drop if case==0
+	drop case
+	sort study_practice
+	gen study_practice1=_n
+	sum study_practice1,de
+	lab var study_practice1 "practice ID consecutive"
+ save "P:\OX94\OX94_backup_Dec_2023\OX94_RERUN\data\practice_temp.dta",replace
+   
+use "P:\OX94\OX94_backup_Dec_2023\OX94_RERUN\data\OX94_cohort_all_symptom_blood_24.dta", clear
+  drop _merge
+	merge m:1 study_practice using "P:\OX94\OX94_backup_Dec_2023\OX94_RERUN\data\practice_temp.dta"
+	tab sex if study_practice1==.
+	drop if study_practice1==.		
+
+
+ 
+save "P:\OX94\OX94_backup_Dec_2023\OX94_RERUN\data\OX94_ids_all_revised_24.dta",replace 	
+erase "P:\OX94\OX94_backup_Dec_2023\OX94_RERUN\data\practice_temp.dta"
+
+// 2) stset cohort
+ use "P:\OX94\OX94_backup_Dec_2023\OX94_RERUN\data\OX94_ids_all_revised_24.dta",clear 
+ stset cancer_fu, enter(enter3) failure(any_cancer_source==1) id(patid) scale(365.25)
+global n 1016
+save "P:\OX94\OX94_backup_Dec_2023\OX94_RERUN\data\OX94_ids_stset_all_revised_24.dta", replace
+
+// 3) match by sex, age, calendar time, general practice 
+forval x= 1/$n {
+	use "P:\OX94\OX94_backup_Dec_2023\OX94_RERUN\data\OX94_ids_stset_all_revised_24.dta",clear 
+	keep if study_practice1==`x'
+	set seed 12345  
+
+	qui sttocc, match(yearofbirth sex1) number(20) gen(cancer_case set time) nodots 
+
+	qui gen index_date_case=cancer_date_all if cancer_case==1
+	qui by set: egen index_date=min(index_date_case)
+	qui by set: gen numset=_N
+ 
+ save "P:\OX94\OX94_backup_Dec_2023\OX94_RERUN\data\match_`x'_all_revised.dta", replace
+	
+}
+
+use "P:\OX94\OX94_backup_Dec_2023\OX94_RERUN\data\match_1_all_revised.dta",clear
+set more off
+	forval x=2/$n  {
+	append using "P:\OX94\OX94_backup_Dec_2023\OX94_RERUN\data\match_`x'_all_revised.dta"
+	}
+	tab cancer_case
+ save "P:\OX94\OX94_backup_Dec_2023\OX94_RERUN\data\OX94_casecontrol_0_all_revised",replace  
+
+ 
+use "P:\OX94\OX94_backup_Dec_2023\OX94_RERUN\data\OX94_casecontrol_0_all_revised", clear
+
+collapse (count) cancer_case, by(study_practice1 set)
+	gen setid=_n
+save "P:\OX94\OX94_backup_Dec_2023\OX94_RERUN\data\setid_temp.dta",replace
+
+use "P:\OX94\OX94_backup_Dec_2023\OX94_RERUN\data\OX94_casecontrol_0_all_revised", clear
+	drop cancer_fu time index_date_case _merge agediag
+	  format index_date %td
+
+	gen agediag= year(index_date) - year(yearofbirth)
+	label var agediag "age at index date in years"
+	label var numset "number in matched set"
+	label var cancer_case "case/control status"
+	lab var index_date "date of case diagnosis or equivalent in controls"
+	label def cancer_case 0 "control" 1 "case"
+	label values cancer_case cancer_case
+	label var set "matched set"
+	tab sex,mis
+	merge m:1 study_practice1 set using "P:\OX94\OX94_backup_Dec_2023\OX94_RERUN\data\setid_temp.dta"
+	tab sex,mis
+	drop _merge set 
+	lab var setid "unique set ID across case control dataset"
+	order  patid sex1 yearofbirth study_practice1 cancer_case setid numset index_date  agediag  
+
+
+
+save "P:\OX94\OX94_backup_Dec_2023\OX94_RERUN\data\OX94_casecontrol_final_24.dta",replace 
+
+
+
+********************************************************************************
+*      		 2 CONDITIONAL LOGISTIC REGRESSION				                  *
+********************************************************************************
+
+//1 ) Univariable analyses
+
+global 63
+forval x=1/$n {
+	tab cancer_case symptom_`x'
+	clogit cancer_case symptom_`x', group(setid) or
+bys agediag_2: tab cancer_case symptom_`x'	
+bys agediag_2: clogit cancer_case symptom_`x', group(setid) or
+}
+
+//2 ) Multivariable analyses
+
+global symptoms smptom_1 symptom_2  symptom_3  symptom_5 symptom_6 symptom_7 symptom_8 symptom_9 symptom_10 symptom_12 symptom_13  symptom_18 symptom_19 symptom_20 symptom_21 symptom_22 symptom_23 symptom_27 symptom_29 symptom_30 symptom_31 symptom_32 symptom_33 symptom_36 symptom_38 symptom_40 symptom_48 symptom_49 symptom_51 symptom_52 symptom_53 symptom_54
+
+clogit cancer_case $symptoms, group(setid) or
+
+
+********************************************************************************
+*      		 3 DIAGNOSTIC TIME INTERVAL						                  *
+********************************************************************************
+
+// Generate median diagnostic time interval for symptoms within multivariable model 
+gen time_gap_all=max(time_gap1_1, time_gap1_2, time_gap1_3, time_gap1_4,  time_gap1_5, time_gap1_6,  time_gap1_7, time_gap1_8, time_gap1_9, time_gap1_10, time_gap1_11, time_gap1_12)
+summ time_gap_all, detail
+
+
+********************************************************************************
+*      		 4 MULTIPLE IMPUTATION							                  *
+********************************************************************************
+
+//1) Generate imputation model 
+mi set wide 
+
+mi register imputed ethnic_2cat town_quintile
+
+timer clear 
+timer on 1 
+
+	mi impute chained (mlogit)ethnic_2cat (ologit)town_quintile = cancer_case  i.symptom_3  i.symptom_6 i.symptom_9 i.symptom_10 i.symptom_21 i.symptom_22 i.symptom_27 i.symptom_30 i.haematuriaf i.symptom_52, rseed(1234) dots add(50) augment 
+
+
+timer off 1 
+timer list 
+
+save "P:\OX94\OX94_backup_Dec_2023\ox94\Data\OX94_casecontrol_master_v24", replace
+
+//2) Evaluate imputation model 
+
+qui mi xeq: gen byte mis_ethnic= missing(ethnic2_cat)
+qui mi xeq: gen byte mis_town=missing(town_quint)
+mi xeq: tab ethnic_2cat if mis_ethnic==0; tab ethnic_2cat if mis_ethnic==1; tab ethnic_2cat
+mi xeq: tab town_quint if mis_town==0; tab town_quint if mis_town==1; tab town_quint
+
+//3) Undertake conditional logistic regression in imputed dataset 
+
+use "P:\OX94\OX94_backup_Dec_2023\ox94\Data\OX94_casecontrol_master_v24", clear
+
+
+mi estimate, or level(95): clogit cancer_case i.symptom_3  i.symptom_6 i.symptom_9 i.symptom_10 i.symptom_21 i.symptom_22 i.symptom_27 i.symptom_30 i.haematuriaf i.symptom_52 i.town_quint i.ethnic_2cat, group(setid)
