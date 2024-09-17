@@ -1,0 +1,212 @@
+************************************************************************************
+* Project: Do Files Thesis - Chapter 4 Diagnostic pathways study 
+* Author: Defne Saatci
+* Date: 31/08/2024
+* Version: final
+*      
+*				        
+********************************************************************************
+
+
+
+********************************************************************************
+*     TABLE OF CONTENTS: 
+*			1) 1-year survivor cohort
+*			2) Complete case quantile regression for diagnostic interval
+*			3) Multiple imputation and quantile regression for diagnostic interval
+*			4) Complete case logistic regression cancer route-to-diagnosis
+*			5) Multiple imputation and logistic regression cancer route-to-diagnosis
+********************************************************************************
+
+********************************************************************************
+*      		 1a GENERATION OF DIAGNOSTIC INTERVAL                *
+********************************************************************************
+
+
+use "P:\OX94\OX94_backup_Dec_2023\OX94_RERUN\data\OX94_merged_cohort_clean_final_vf_24_diag_all.dta", clear
+
+//1) Remove diagnostic interval >6 months (183 days)
+
+global n 64
+
+forval x=1/$n {
+	
+	gen diag_int_`x'=cancer_date_all-effectivedatetime_symptom_`x'
+	replace diag_int_`x'=. if  diag_int_`x'<0 
+	replace diag_int_`x'=. if  diag_int_`x'>183
+}
+
+
+//2) Generate diagnostic interval  for each subtype (i.e. identify longest diagnostic interval within relevant symptoms )
+gen tot_diag_int_leuk= max(diag_int_1, diag_int_2,  diag_int_3,  diag_int_5, diag_int_6, diag_int_7, diag_int_8, diag_int_9, diag_int_10,  diag_int_22,  diag_int_27,  diag_int_29, diag_int_30, diag_int_52 ) 
+replace tot_diag_int_leuk=. if cancer_type!=1 
+bys cancer_type: summ tot_diag_int_leuk, det
+
+
+gen tot_diag_int_lymph= max(diag_int_1, diag_int_2,  diag_int_3,  diag_int_5, diag_int_6,  diag_int_8, diag_int_9, diag_int_10,  diag_int_18, diag_int_19, diag_int_20,  diag_int_27,  diag_int_29, diag_int_30, diag_int_31, diag_int_32, diag_int_52   ) 
+replace tot_diag_int_lymph=. if cancer_type!=2
+bys cancer_type: summ tot_diag_int_lymph, det
+
+
+gen tot_diag_int_cns=max( diag_int_7,  diag_int_9, diag_int_21, diag_int_23, diag_int_33, diag_int_37, diag_int_38,  diag_int_40,  diag_int_48, diag_int_49, diag_int_51, diag_int_52, diag_int_53, diag_int_54, diag_int_56)
+replace tot_diag_int_cns=. if cancer_type!=3
+bys cancer_type: summ tot_diag_int_cns, det
+
+gen tot_diag_int_sarc=max( diag_int_2, diag_int_5, diag_int_6, diag_int_7,  diag_int_9, diag_int_10, diag_int_13, diag_int_18, diag_int_19, diag_int_20, diag_int_21,  diag_int_23, diag_int_27,  diag_int_29, diag_int_36, diag_int_51, diag_int_52, diag_int_53)
+replace tot_diag_int_sarc=. if cancer_type!=4
+bys cancer_type: summ tot_diag_int_sarc, det
+
+
+gen tot_diag_int_abdo=max( diag_int_5, diag_int_9, diag_int_10, diag_int_13, diag_int_38,  diag_int_40,  diag_int_48, diag_int_51, diag_int_52, diag_int_53, diag_int_54)
+replace tot_diag_int_abdo=. if cancer_type==1 | cancer_type==2 | cancer_type==3 | cancer_type==4 
+bys cancer_type: summ tot_diag_int_abdo, det
+
+
+//3) Combine individual diagnostic intervals to generate overall diagnostic interval (longest diagnostic interval)
+
+gen tot_diag_int_any=max(tot_diag_int_leuk, tot_diag_int_lymph, tot_diag_int_cns, tot_diag_int_sarc, tot_diag_int_abdo)
+
+bys cancer_type: summ tot_diag_int_any, det
+
+
+********************************************************************************
+*      		 1b GENERATION OF CANCER ROUTE                *
+********************************************************************************
+
+
+gen cancer_route_e=0 
+replace cancer_route_e=1 if cancer_route==2
+replace cancer_route_e=. if cancer_route==8 | cancer_route==.
+
+tab cancer_route_e, m
+
+
+********************************************************************************
+*      		 2a COMPLETE CASE QUANTILE REGRESSION	(example factor age)			               *
+********************************************************************************
+//patient factors: age, cancer type, sex, ethnicity, deprivation level
+//health system factors: route-to-diagnosis, geographical region, decade, economic crisis and COVID-19 
+
+ bsqreg tot_di i.age_exit_2 
+ bsqreg tot_di i.age_exit_2 i.cancer_groups i.aggressive i.sex
+
+ bsqreg tot_di i.age_exit_2, quantile(25)
+ bsqreg tot_di i.age_exit_2 i.cancer_groups i.aggressive i.sex, quantile(25)
+
+ bsqreg tot_di i.age_exit_2, quantile(75)
+ bsqreg tot_di i.age_exit_2 i.cancer_groups i.aggressive i.sex, quantile(75)
+
+ ********************************************************************************
+*      		 3a MULTIPLE IMPUTATION QUANTILE REGRESSION	(one example factor age)			               *
+********************************************************************************
+
+
+//1) Visualise continous variables and transform for imputation
+
+histogram age_exit, percent normal  // looks normal distribution
+histogram tot_diag_int_any
+
+
+gen log_di=log(tot_diag_int_any)
+histogram log_di					// looks normal distribution
+
+
+//2) Quantify degree of missingness of incomplete data
+
+tab ethnic_2cat, m 
+tab town_2, m  
+tab cancer_type, m
+
+
+//3) set up mi model 
+
+mi set wide 
+
+mi register imputed ethnic_2cat town_quint cuberoot_di
+
+
+timer clear 
+timer on 1 
+
+//include outcome (i.e., diagnostic interval)
+	mi impute chained (mlogit)ethnic_2cat (ologit)town_quint (regress) log_di  = i.cancer_groups i.aggressive i.decade i.region i.blood_test_done i.imaging i.age_exit_2 i.sex1 i.combined_co i.combined_rf i.nice_symptoms, rseed(2526) dots add(50) augment	
+
+
+timer off 1 
+timer list 
+
+//4)convert di back into understandable metric 
+
+mi passive: gen tot_di=invlogit(log_di)
+summ _1_tot_di, det
+summ _5_tot_di, det
+summ _35_tot_di, det
+summ _50_tot_di, det
+
+save "P:\OX94\OX94_backup_Dec_2023\OX94_RERUN\data\OX94_DI_imputed_vf_24.dta", replace
+
+
+use "P:\OX94\OX94_backup_Dec_2023\OX94_RERUN\data\OX94_DI_imputed_vf_24.dta", clear
+
+//patient factors: age, cancer type, sex, ethnicity, deprivation level
+//health system factors: route-to-diagnosis, geographical region, decade, economic crisis and COVID-19 
+
+
+
+// age 
+
+mi estimate: bsqreg tot_di i.age_exit_2 
+mi estimate: bsqreg tot_di i.age_exit_2 i.cancer_groups i.aggressive i.sex
+
+mi estimate: bsqreg tot_di i.age_exit_2, quantile(25)
+mi estimate: bsqreg tot_di i.age_exit_2 i.cancer_groups i.aggressive i.sex, quantile(25)
+
+mi estimate: bsqreg tot_di i.age_exit_2, quantile(75)
+mi estimate: bsqreg tot_di i.age_exit_2 i.cancer_groups i.aggressive i.sex, quantile(75)
+
+
+********************************************************************************
+*      		 2b COMPLETE CASE LOGISTIC REGRESSION	(example factor age)			               *
+********************************************************************************
+//patient factors: age, cancer type, sex, ethnicity, deprivation level
+//health system factors: route-to-diagnosis, geographical region, decade, economic crisis and COVID-19 
+
+logit cancer_route_e i.age_exit_2 i.sex1 i.aggressive i.cancer_groups, or
+
+ ********************************************************************************
+*      		 3a MULTIPLE IMPUTATION LOGISTIC REGRESSION	(one example factor age)			               *
+********************************************************************************
+
+//set up mi model 
+
+mi set wide 
+
+mi register imputed ethnic_2cat town_quint
+
+
+timer clear 
+timer on 1 
+
+//include outcome 
+	mi impute chained (mlogit)ethnic_2cat (ologit)town_quint (logit)cancer_route_e = i.cancer_groups i.aggressive i.region i.blood_test_done i.imaging i.age_exit_2 i.sex1, rseed(2526) dots add(50) augment	
+
+
+
+
+timer off 1 
+timer list 
+
+
+
+save "P:\OX94\OX94_backup_Dec_2023\OX94_RERUN\data\OX94_DI_imputed_v_cancer_route_24.dta", replace
+
+
+
+use "P:\OX94\OX94_backup_Dec_2023\OX94_RERUN\data\OX94_DI_imputed_v_cancer_route_24.dta", clear
+//// 
+
+//age
+
+mi estimate, or: logit cancer_route_e i.age_exit_2 
+mi estimate, or: logit cancer_route_e i.age_exit_2 i.sex1 i.cancer_groups i.aggressive
+
