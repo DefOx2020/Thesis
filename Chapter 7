@@ -1,0 +1,197 @@
+************************************************************************************
+* Project: Do Files Thesis - Chapter 6 mortality studies
+* Author: Defne Saatci
+* Date: 31/08/2024
+* Version: final
+*      
+*				        
+********************************************************************************
+
+
+
+********************************************************************************
+*     TABLE OF CONTENTS: 
+*			1) Generation of matched cohort 
+*			2) Complete Case Cox models
+*			3) Cases only - diagnostic pathway associations, cox models
+*			4) Cases only - diagnostic pathway association, cox models, imputation
+********************************************************************************
+
+********************************************************************************
+*      		 1 GENERATION OF 1- YEAR AND 5-YEAR COHORTS		                   *
+********************************************************************************
+
+
+//for 1 year survivors
+
+ gen survivor_entry_1=cancer_date_all+365.25
+format survivor_entry_1 %td 
+summ survivor_entry_1
+
+// for 5 year survivors 
+
+ gen survivor_entry_5=cancer_date_all+1826.25
+format survivor_entry_5 %td 
+summ survivor_entry_5
+
+///Matched case-control cohort 
+clear
+preserve
+drop if cancer_type!=0
+rename * *_control 
+rename yearofbirth_control yearofbirth
+rename sex1_control sex
+tempfile controls
+save `controls', replace
+restore
+
+
+drop if cancer_type==0 | cancer_type==.| cancer_type==9
+rename * *_case
+rename yearofbirth_case yearofbirth
+rename sex1_case sex
+
+
+joinby yearofbirth sex using `controls'
+
+
+set seed 1234 
+gen double shuffle= runiform()
+
+bysort patid_control: keep if _n==1
+by patid_case (shuffle), sort: keep if _n<=10 
+drop shuffle
+
+save "P:\OX136\OX136_RERUN\Data\OX136_RERUN_cohort_survivor_x_year_matched_cohort.dta", replace
+
+use "P:\OX136\OX136_RERUN\Data\OX136_RERUN_cohort_survivor_x_year_matched_cohort.dta", clear 
+collapse (count) sex, by(patid_case)
+gen setid=_n
+drop sex
+
+save "P:\OX136\OX136_RERUN\Data\OX136_RERUN_cohort_survivor_x_year_matched_setid.dta", replace
+
+
+merge 1:n patid_case using "P:\OX136\OX136_RERUN\Data\OX136_RERUN_cohort_survivor_x_year_matched_cohort.dta"
+
+
+save "P:\OX136\OX136_RERUN\Data\OX136_RERUN_cohort_survivor_x_year_matched_cohort.dta", replace
+
+
+ use  "P:\OX136\OX136_RERUN\Data\OX136_RERUN_cohort_survivor_x_year_matched_cohort.dta", clear 
+ keep patid_case setid
+ bysort patid_case: gen seq=_n
+ drop if seq>1
+ drop seq
+ rename patid_case patid
+ 
+ save "P:\OX136\OX136_RERUN\Data\OX136_RERUN_cohort_survivor_x_year_matched_cases_setid.dta", replace
+ 
+  use  "P:\OX136\OX136_RERUN\Data\OX136_RERUN_cohort_survivor_x_year_matched_cohort.dta", clear 
+
+   keep patid_control setid
+   rename patid_control patid
+   rename setid setid2
+ save "P:\OX136\OX136_RERUN\Data\OX136_RERUN_cohort_survivor_x_year_matched_controls_setid.dta", replace
+
+
+
+ use "P:\OX136\OX136_RERUN\Data\OX136_RERUN_cohort_survivor_x_year_matched_cohort.dta", clear
+ drop _merge
+  merge 1:1 patid using  "P:\OX136\OX136_RERUN\Data\OX136_RERUN_cohort_survivor_x_year_matched_controls_setid.dta"
+
+ 
+ drop if setid==. & any_cancer_source==1 
+ drop if setid2==. & any_cancer_source==0
+ 
+ gen setid_final=setid if any_cancer_source==1 
+ replace setid_final=setid2 if any_cancer_source==0
+ drop setid setid2 _merge
+  save "P:\OX136\OX136_RERUN\Data\OX136_RERUN_cohort_survivor_matched_cohort_final_x_survivor.dta",replace
+  
+  
+  
+********************************************************************************
+*      		 2 COMPLETE CASE COX MODELS								           *
+********************************************************************************
+
+//1) restrict entry to above 8 years for mental health disorders   
+gen mh_age=yearofbirth + 2922
+gen entry_revised_mh=max(index_date_final, mh_age)
+drop if exitdate<=entry_revised_mh
+
+//2) stset data (where x is depression/anxiety or psychotic disorder )
+stset exitdate, enter(entry_revised_mh) failure(outcome_mh==`x') id(patid) scale(365.25)
+stcox i.any_cancer_source i.town_quint i.fh_psych, vce(cluster study_practice)
+
+********************************************************************************
+*      		 3 CANCER CASE ONLY - Diagnostic Pathway Analysis 				   *
+********************************************************************************
+
+
+//1) Diagnostic intervals
+
+//stset data 
+stset exitdate, enter(entry_revised_mh) failure(outcome_mh==`x') id(patid) scale(365.25)
+
+
+//a) no modification, total diagnostic interval
+stcox  di_max i.entry_age_cat i.sex i.town_2 i.aggressive i.cancer_2cat i.cancer_period i.fh_psych i.radio i.chemo, vce(cluster study_practice)
+
+//b) splines
+
+mkspline dint=di_max, nknots(4) cubic displayknots
+
+stcox  dint1 dint2 dint3 i.entry_age_cat i.sex i.town_2 i.aggressive i.cancer_2cat i.cancer_period i.fh_psych i.radio i.chemo, vce(cluster study_practice)
+predict xb, xb
+predict basesurv, basesurv
+gen hr=1-basesurv^(exp(xb))
+twoway(fpfitci hr di_max)
+
+//c) restricted centiles 
+
+
+drop if di_max>=`x'
+stcox  di_max i.entry_age_cat i.sex i.town_2 i.aggressive i.cancer_2cat i.cancer_period i.fh_psych i.radio i.chemo, vce(cluster study_practice)
+parmest, list(,) saving ("P:\OX94\OX94_backup_Dec_2023\OX94_RERUN\Data\OX94_di_restricted_1_year_mental.dta", replace) eform label for(estimate min95 max95)
+predict xb, xb
+predict basesurv, basesurv
+gen hr=1-basesurv^(exp(xb))
+twoway (fpfitci hr di_max)
+restore
+
+
+//2) Cancer route 
+
+stcox  i.cancer_route_e i.entry_age_cat i.sex i.town_2 i.aggressive i.cancer_2cat i.cancer_period i.fh_psych i.radio i.chemo, vce(cluster study_practice)
+
+********************************************************************************
+*      		 4 CANCER CASE ONLY - Diagnostic Pathway Analysis w/ MI		       *
+********************************************************************************
+
+
+
+//1) set up mi model 
+
+mi set wide 
+
+mi register imputed ethnic_2cat town_2 cancer_route_e 
+
+
+timer clear 
+timer on 1 
+
+//2) include outcome 
+	mi impute chained (mlogit)ethnic_2cat (ologit)town_2 (logit)cancer_route_e= i.cancer_2cat i.entry_age_cat i.sex i.aggressive i.cancer_2cat i.cancer_period i.fh_psych i.radio i.chemo i._d, rseed(2526) dots add(50) augment	
+
+
+timer off 1 
+timer list 
+
+
+save "P:\OX94\OX94_backup_Dec_2023\OX94_RERUN\data\OX94_mental_x_year_imp.dta", replace
+
+//3) carry out cox model in imputed model 
+
+mi estimate, dots:stcox  i.cancer_route_e i.cancer_2cat i.entry_age_cat i.sex i.aggressive i.cancer_2cat i.cancer_period i.fh_psych i.radio i.chemo i.ethnic_2cat i.town_2, vce(cluster study_practice)
+
