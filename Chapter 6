@@ -1,0 +1,93 @@
+************************************************************************************
+* Project: Do Files Thesis - Chapter 6 mortality studies
+* Author: Defne Saatci
+* Date: 31/08/2024
+* Version: final
+*      
+*				        
+********************************************************************************
+
+
+
+********************************************************************************
+*     TABLE OF CONTENTS: 
+*			1) Generate 1-year and 5-year cohorts
+*			2) Complete Case Cox models
+********************************************************************************
+
+********************************************************************************
+*      		 1 GENERATION OF 1- YEAR AND 5-YEAR COHORTS		                   *
+********************************************************************************
+//1) 1- year follow up 
+//a) entry is cancer date and exit date is 1-year after entry or death/left practice
+gen entry_date_prog=cancer_date_all 
+format %td entry_date_prog
+gen exit_date_prog=entry_date_prog+365.25
+
+gen exit_date_prog_final=min(exit_date_prog, exitdate)
+format %td exit_date_prog_final
+
+//b) remove if cancer date is after date of death
+gen cancer_died_remove=0
+replace cancer_died_remove=1 if cancer_death<=entry_date_prog
+replace cancer_died=. if cancer_death>=exit_date_prog_final
+
+drop if cancer_died_remove==1 
+
+//c) stset cohort 
+stset exit_date_prog_final, origin(entry_date_prog) failure(cancer_died)
+
+
+
+//1) 5- year follow up 
+//a) entry is cancer date and exit date is 5-year after entry or death/left practice
+gen entry_date_prog=cancer_date_all 
+format %td entry_date_prog
+gen exit_date_prog=entry_date_prog+1826.25
+
+gen exit_date_prog_final=min(exit_date_prog, exitdate)
+format %td exit_date_prog_final
+
+//b) remove if cancer date is after date of death
+gen cancer_died_remove=0
+replace cancer_died_remove=1 if cancer_death<=entry_date_prog
+replace cancer_died=. if cancer_death>=exit_date_prog_final
+
+drop if cancer_died_remove==1 
+
+//c) stset cohort 
+stset exit_date_prog_final, origin(entry_date_prog) failure(cancer_died)
+
+
+********************************************************************************
+*      		 2 COMPLETE CASE COX MODELS						                   *
+********************************************************************************
+
+//1) No modification, total diagnostic interval 
+
+stcox  tot_diag_int_any i.age_exit_2 i.sex i.aggressive i.cancer_2cat, vce(cluster study_practice)
+
+//2) Restricted cubic splines, total diagnostic interval 
+
+mkspline intf = tot_diag_int_any, cubic nknots(4) displayknots
+stcox  intf1 intf2 intf3 i.age_exit_2 i.sex i.town_2 i.aggressive i.cancer_2cat i.decade , vce(cluster study_practice)
+predict xb, xb 
+predict basesurv, basesurv
+gen hr=1-basesurv^(exp(xb))
+twoway (fpfitci hr tot_diag_int_any)
+
+//3) restricted centiles, total diagnostic interval
+
+preserve
+drop if tot_diag_int_any>=`x'
+stcox  tot_diag_int_any i.age_exit_2 i.sex i.aggressive i.cancer_2cat, vce(cluster study_practice)
+parmest, list(,) saving ("P:\OX94\OX94_backup_Dec_2023\OX94_RERUN\Data\OX94_di_restricted_1_year.dta", replace) eform label for(estimate min95 max95)
+predict xb, xb
+predict basesurv, basesurv
+gen hr=1-basesurv^(exp(xb))
+twoway (fpfitci hr tot_diag_int_any)
+restore
+
+//4) Cancer route
+
+stcox  i.cancer_route_e i.age_exit_2 i.sex  i.aggressive i.cancer_2cat , vce(cluster study_practice)
