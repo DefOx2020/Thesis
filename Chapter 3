@@ -150,7 +150,7 @@ mi register imputed ethnic_2cat town_quintile
 timer clear 
 timer on 1 
 
-	mi impute chained (mlogit)ethnic_2cat (ologit)town_quintile = cancer_case  i.symptom_3  i.symptom_6 i.symptom_9 i.symptom_10 i.symptom_21 i.symptom_22 i.symptom_27 i.symptom_30 i.haematuriaf i.symptom_52, rseed(1234) dots add(50) augment 
+	mi impute chained (mlogit)ethnic_2cat (ologit)town_quintile = i.cancer_case  i.symptom_3  i.symptom_6 i.symptom_9 i.symptom_10 i.symptom_21 i.symptom_22 i.symptom_27 i.symptom_30 i.haematuriaf i.symptom_52, rseed(1234) dots add(50) augment 
 
 
 timer off 1 
