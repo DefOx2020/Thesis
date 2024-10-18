@@ -142,7 +142,7 @@ gen eosinophil_abn=0
 replace eosinophil_abn=1 if eosinophil_value>0.81 & eosinophil_value!=.
 
 gen crp_abn=0
-replace crp_abn=1 if crp_value>5 & crp_value!=.
+replace crp_abn=1 if crp_value>3 & crp_value!=.
 
 gen esr_abn=0 
 replace esr_abn=1 if esr_value>20 & esr_value!=.
@@ -152,9 +152,10 @@ replace ferritin_abn=1 if ferritin_value>400 & ferritin_value!=.
 
 gen mcv_abn=0
 replace mcv_abn=1 if mcv_value>96 & mcv_value!=.
+replace mcv_abn=1 if mcv_value<70 & mcv_value!=.
 
 gen ldh_abn=0
-replace ldh_abn=1 if ldh_value>900 & ldh_value!=.
+replace ldh_abn=1 if ldh_value>300 & ldh_value!=.
 
 gen alp_abn=0
 replace alp_abn=1 if alp_value>250 & alp_value!=.
@@ -165,6 +166,8 @@ replace transaminase_abn=1 if transaminase_value>60 & transaminase_value!=.
 gen albumin_abn=0
 replace albumin_abn=1 if albumin_value<35 & albumin_value!=.
 
+gen bilirubin_abn=0
+replace bilirubin_abn=1 if bilirubin_value<20 & bilirubin_value!=.
 
 save "P:\OX94\data\OX94_LR_model_24_X.dta", replace //separately for blood cancers (leukaemias/lymphomas) and solid cancers (CNS tumours, sarcomas, abdominal tumours, gonadal germ cell tumours)
 
