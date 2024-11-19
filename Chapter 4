@@ -167,7 +167,7 @@ gen albumin_abn=0
 replace albumin_abn=1 if albumin_value<35 & albumin_value!=.
 
 gen bilirubin_abn=0
-replace bilirubin_abn=1 if bilirubin_value<20 & bilirubin_value!=.
+replace bilirubin_abn=1 if bilirubin_value>20 & bilirubin_value!=.
 
 save "P:\OX94\data\OX94_LR_model_24_X.dta", replace //separately for blood cancers (leukaemias/lymphomas) and solid cancers (CNS tumours, sarcomas, abdominal tumours, gonadal germ cell tumours)
 
