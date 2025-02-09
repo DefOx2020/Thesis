@@ -1,0 +1,267 @@
+Disorder,SNOMED Concept ID,Snomed Concept FullySpecifiedName
+Depression ,15639000,"Moderate major depression, single episode (disorder)"
+,162722001,On examination - depressed (disorder)
+,1823881000006100,Depression confirmed (situation)
+,191604000,"Single major depressive episode, severe, with psychosis (disorder)"
+,191659001,Atypical depressive disorder (disorder)
+,191676002,Reactive depressive psychosis (disorder)
+,192046006,Brief depressive adjustment reaction (disorder)
+,192049004,Prolonged depressive adjustment reaction (disorder)
+,19527009,Single episode of major depression in full remission (disorder)
+,1972111000006100,Organic depressive disorder (disorder)
+,1975981000006100,"Mild depressive episode, without somatic syndrome (disorder)"
+,1975991000006100,"Mild depressive episode, with somatic syndrome (disorder)"
+,1976021000006100,"Moderate depressive episode, without somatic syndrome (disorder)"
+,1976051000006100,"Moderate depressive episode, with somatic syndrome (disorder)"
+,231499006,Endogenous depression first episode (disorder)
+,231500002,Masked depression (disorder)
+,231542000,Depressive conduct disorder (disorder)
+,247803002,Seasonal affective disorder (disorder)
+,251000119105,"Severe major depression, single episode (disorder)"
+,272022009,Complaining of feeling depressed (finding)
+,272024005,Complaining of feeling unhappy (finding)
+,300706003,Endogenous depression (disorder)
+,310495003,Mild depression (disorder)
+,310496002,Moderate depression (disorder)
+,310497006,Severe depression (disorder)
+,35489007,Depressive disorder (disorder)
+,361761000000106,On full dose long term treatment for depression (finding)
+,366979004,Depressed mood (finding)
+,36923009,"Major depression, single episode (disorder)"
+,394924000,Symptoms of depression (finding)
+,397701000000102,[X]Severe depressive episode without psychotic symptoms (disorder)
+,430421000000104,[X]Mild depressive episode (disorder)
+,465441000000108,[X]Moderate depressive episode (disorder)
+,473126001,Suspected depressive disorder (situation)
+,58703003,Postpartum depression (disorder)
+,609311000000100,Depressive disorder NEC (disorder)
+,70747007,"Major depression single episode, in partial remission (disorder)"
+,73867007,Severe major depression with psychotic features (disorder)
+,75084000,Severe major depression without psychotic features (disorder)
+,755321000000106,"Single major depressive episode, severe, with psychosis, psychosis in remission (disorder)"
+,78667006,Dysthymia (disorder)
+,790961000000101,Antenatal depression (disorder)
+,79298009,"Mild major depression, single episode (disorder)"
+,832007,Moderate major depression (disorder)
+,83458005,Agitated depression (disorder)
+,87414006,Reactive depression (situational) (disorder)
+,87512008,Mild major depression (disorder)
+,909681000006106,[RFC] Depression (finding)
+,959741000006101,Sadness/hopelessness/decreased self-esteem (finding)
+,981611000006104,Abnormal depressed feelings (finding)
+Self-Harm,1821291000006100,Recent suicide attempt (situation)
+,2000261000006100,MHIP behavioural history - previous suicidal behaviour (procedure)
+,2000271000006100,MHIP behavioural history - severity of suicidal behaviour (procedure)
+,2000281000006100,MHIP behavioural history - intent of suicidal behaviour (procedure)
+,2000431000006100,MHIP comprehensive assessment - suicidal ideation (procedure)
+,2000761000006100,MHIP comprehensive assessment - suicidal thoughts - strong (procedure)
+,2000771000006100,MHIP comprehensive assessment - suicidal thoughts - serious (procedure)
+,2000781000006100,MHIP comprehensive assessment - suicidal thoughts - frequent (procedure)
+,2000791000006100,MHIP comprehensive assessment - suicidal thoughts - intense (procedure)
+,2000801000006100,MHIP comprehensive assessment - suicidal thoughts - persistent (procedure)
+,2000811000006100,MHIP comprehensive assessment - motivated to act on suicidal thoughts (procedure)
+,2001011000006100,MHIP comprehensive assessment - current suicide plans (procedure)
+,2001021000006100,MHIP - specific/serious/feasible suicide plans (procedure)
+,2001061000006100,MHIP - suicide plans prepared (procedure)
+,2001071000006100,MHIP - resources to act on suicide plans (procedure)
+,2001101000006100,MHIP - confidence to complete suicide plans (procedure)
+,2001341000006100,MHIP comprehensive assessment - medium risk of suicide (procedure)
+,2001351000006100,MHIP comprehensive assessment - high risk of suicide (procedure)
+,2001461000006100,MHIP - intention to act on suicide plans (procedure)
+,219108005,"Suicide and selfinflicted poisoning by analgesics, antipyretics and anti-rheumatics (navigational concept)"
+,219122005,Self poisoning by corrosive or caustic substance (disorder)
+,219123000,Self poisoning caused by arsenic and/or arsenic compound (disorder)
+,219125007,Suicide and selfinflicted poisoning by gases in domestic use (disorder)
+,219126008,Suicide and selfinflicted poisoning by gas distributed by pipeline (disorder)
+,219127004,Suicide and selfinflicted poisoning by liquefied petroleum gas distributed in mobile containers (disorder)
+,219131005,Self poisoning caused by motor vehicle exhaust gas (disorder)
+,219137009,Suicide or attempted suicide by hanging (navigational concept)
+,219141008,Suicide and selfinflicted injury by drowning (navigational concept)
+,219142001,Suicide or selfinflicted injury by firearms and explosives (navigational concept)
+,219150005,Suicide or selfinflicted injury by cutting and stabbing (navigational concept)
+,219151009,Suicide or selfinflicted injury by cutting (navigational concept)
+,219152002,Self inflicted lacerations to wrist (disorder)
+,219153007,Suicide or selfinflicted injury by stabbing (navigational concept)
+,219155000,Suicide or self injury by jumping from a height (navigational concept)
+,219168008,Suicide or self injury by electric current (navigational concept)
+,242836008,Self poisoning by non-drug solid or liquid agents (disorder)
+,242839001,Self poisoning by gas (disorder)
+,248062006,Self-injurious behavior (finding)
+,267073005,Suicidal (finding)
+,269725004,Suicide and selfinflicted injury (navigational concept)
+,269726003,Suicide and selfinflicted injury by suffocation by plastic bag (navigational concept)
+,269808005,Attempted suicide - car exhaust (event)
+,271982007,Intentional self poisoning (disorder)
+,274912004,Self poisoning by agricultural chemical (disorder)
+,276853009,Self inflicted injury (disorder)
+,287181000,Attempted suicide - hanging (event)
+,287182007,Attempted suicide - suffocation (event)
+,287183002,Attempted suicide - drowning (event)
+,287184008,Attempted suicide - firearms (event)
+,287185009,Attempted suicide - cut/stab (event)
+,287186005,Attempted suicide - jumping from a high place (event)
+,288311002,Attempted suicide - domestic gas (event)
+,296036006,Barbiturate overdose (disorder)
+,296039004,Intentional amylobarbitone overdose (disorder)
+,304594002,Suicidal intent (finding)
+,403582001,Self-inflicted caustic burn (disorder)
+,418420002,Intentionally harming self (event)
+,431307001,Intentional poisoning caused by drug (disorder)
+,44301001,Suicide (event)
+,48981002,Parasuicide (event)
+,59274003,Intentional drug overdose (disorder)
+,6471006,Suicidal thoughts (finding)
+,681111000000102,Suicide and self inflicted poisoning by drug or medicine NOS (navigational concept)
+,684281000000100,Suicide and self inflicted injury NOS (navigational concept)
+,82313006,Suicide attempt (event)
+Anxiety Disorders,1038231000000100,howRu rating score - Feeling low or worried (observable entity)
+,13438001,Overanxious disorder of childhood (disorder)
+,162723006,On examination - anxious (finding)
+,1818111000006100,Feeling anxious (finding)
+,191708009,Chronic anxiety (finding)
+,191722009,Agoraphobia with panic attacks (disorder)
+,192108001,Disturbance of anxiety and fearfulness in childhood and adolescence (disorder)
+,192110004,Childhood and adolescent fearfulness disturbance (disorder)
+,192611004,Childhood phobic anxiety disorder (disorder)
+,197480006,Anxiety disorder (disorder)
+,1976491000006100,Mixed anxiety and depressive reaction (disorder)
+,198288003,Anxiety state (finding)
+,207363009,Anxiety neurosis (finding)
+,21897009,Generalized anxiety disorder (disorder)
+,225624000,Panic attack (finding)
+,25501002,Social phobia (disorder)
+,371631005,Panic disorder (disorder)
+,386810004,Phobic disorder (disorder)
+,48694002,Anxiety (finding)
+,54307006,Zoophobia (finding)
+,54587008,Simple phobia (disorder)
+,56576003,Panic disorder without agoraphobia (disorder)
+,64165008,Avoidant disorder of childhood (disorder)
+,70691001,Agoraphobia (disorder)
+,79015004,Worried (finding)
+,853241000006103,Phobic anxiety (disorder)
+Psychotic disorders,13746004,Bipolar disorder (disorder)
+,162004,Severe manic bipolar I disorder without psychotic features (disorder)
+,191618007,"Bipolar affective disorder, current episode manic (disorder)"
+,191620005,"Bipolar affective disorder, currently manic, mild (disorder)"
+,191621009,"Bipolar affective disorder, currently manic, moderate (disorder)"
+,191623007,"Bipolar affective disorder, currently manic, severe, with psychosis (disorder)"
+,191625000,"Bipolar affective disorder, currently manic, in full remission (disorder)"
+,191627008,"Bipolar affective disorder, current episode depression (disorder)"
+,191629006,"Bipolar affective disorder, currently depressed, mild (disorder)"
+,191630001,"Bipolar affective disorder, currently depressed, moderate (disorder)"
+,191634005,"Bipolar affective disorder, currently depressed, in full remission (disorder)"
+,191636007,Mixed bipolar affective disorder (disorder)
+,191638008,"Mixed bipolar affective disorder, mild (disorder)"
+,191639000,"Mixed bipolar affective disorder, moderate (disorder)"
+,191641004,"Mixed bipolar affective disorder, severe, with psychosis (disorder)"
+,191643001,"Mixed bipolar affective disorder, in full remission (disorder)"
+,192362008,"Bipolar affective disorder, current episode mixed (disorder)"
+,1972101000006100,Organic bipolar affective disorder (disorder)
+,1972121000006100,Organic mixed affective disorder (disorder)
+,1975931000006100,"Bipolar affect disorder cur epi mild or moderate depressn, without somatic syndrome (disorder)"
+,1975941000006100,"Bipolar affect disorder cur epi mild or moderate depressn, with somatic syndrome (disorder)"
+,231494001,Mania (disorder)
+,231496004,Hypomania (disorder)
+,268619003,"Manic disorder, single episode (disorder)"
+,270901009,"Schizoaffective disorder, mixed type (disorder)"
+,271428004,"Schizoaffective disorder, manic type (disorder)"
+,31446002,"Bipolar I disorder, most recent episode hypomanic (disorder)"
+,371596008,Bipolar I disorder (disorder)
+,405273008,Manic mood (finding)
+,49512000,Depressed bipolar I disorder in partial remission (disorder)
+,58329000,Organic mood disorder of manic type (disorder)
+,61403008,Severe depressed bipolar I disorder without psychotic features (disorder)
+,63249007,Manic bipolar I disorder in partial remission (disorder)
+,68890003,Schizoaffective disorder (disorder)
+,760721000000109,"Mixed bipolar affective disorder, in partial remission (disorder)"
+,764591000000108,"Mixed bipolar affective disorder, severe (disorder)"
+,765176007,Psychosis and severe depression co-occurrent and due to bipolar affective disorder (disorder)
+,83225003,Bipolar II disorder (disorder)
+,84760002,"Schizoaffective disorder, depressive type (disorder)"
+,85248005,Bipolar disorder in remission (disorder)
+,111482003,Subchronic schizophrenia with acute exacerbations (disorder)
+,111483008,Catatonic schizophrenia in remission (disorder)
+,111484002,Undifferentiated schizophrenia (disorder)
+,12939007,Chronic disorganized schizophrenia (disorder)
+,14291003,Subchronic disorganized schizophrenia with acute exacerbations (disorder)
+,16990005,Subchronic schizophrenia (disorder)
+,191525009,Non-organic psychosis (disorder)
+,191526005,Schizophrenic disorders (disorder)
+,191527001,Simple schizophrenia (disorder)
+,191542003,Catatonic schizophrenia (disorder)
+,191559008,Latent schizophrenia (disorder)
+,191561004,Subchronic latent schizophrenia (disorder)
+,191562006,Chronic latent schizophrenia (disorder)
+,191565008,Latent schizophrenia in remission (disorder)
+,191567000,Schizoaffective schizophrenia (disorder)
+,191569002,Subchronic schizoaffective schizophrenia (disorder)
+,191570001,Chronic schizoaffective schizophrenia (disorder)
+,191574005,Schizoaffective schizophrenia in remission (disorder)
+,191577003,Cenesthopathic schizophrenia (disorder)
+,191680007,Psychogenic paranoid psychosis (disorder)
+,191687005,Psychosis with origin in childhood (disorder)
+,191696005,Atypical childhood psychoses (disorder)
+,191697001,Borderline psychosis of childhood (disorder)
+,1974351000006100,"Paranoid schizophrenia, continuous (disorder)"
+,1974391000006100,"Paranoid schizophrenia, episodic with progressive deficit (disorder)"
+,1974431000006100,"Paranoid schizophrenia, episodic with stable deficit (disorder)"
+,1974601000006100,"Hebephrenic schizophrenia, continuous (disorder)"
+,1974611000006100,"Hebephrenic schizophrenia, episodic with progressive deficit (disorder)"
+,1974621000006100,"Hebephrenic schizophrenia, episodic with stable deficit (disorder)"
+,1974751000006100,"Catatonic schizophrenia, continuous (disorder)"
+,1974781000006100,"Catatonic schizophrenia, episodic with progressive deficit (disorder)"
+,1974801000006100,"Catatonic schizophrenia, episodic with stable deficit (disorder)"
+,1974951000006100,"Undifferentiated schizophrenia, continuous (disorder)"
+,1974971000006100,"Undifferentiated schizophrenia, episodic with progressive deficit (disorder)"
+,1975001000006100,"Undifferentiated schizophrenia, episodic with stable deficit (disorder)"
+,1975191000006100,"Post-schizophrenic depression, continuous (disorder)"
+,1975351000006100,"Residual schizophrenia, continuous (disorder)"
+,1975381000006100,"Residual schizophrenia, episodic with progressive deficit (disorder)"
+,1975401000006100,"Residual schizophrenia, episodic with stable deficit (disorder)"
+,1975491000006100,"Simple schizophrenia, continuous (disorder)"
+,1975501000006100,"Simple schizophrenia, episodic with progressive deficit (disorder)"
+,1975521000006100,"Simple schizophrenia, episodic with stable deficit (disorder)"
+,1975621000006100,"Acute polymorphic psychot disord without symp of schizoph, without associated acute stress (disorder)"
+,1975641000006100,"Simple schizophrenia, course uncertain, period of observation too short (disorder)"
+,1975671000006100,"Acute polymorphic psychot disord without symp of schizoph, with associated acute stress (disorder)"
+,1975681000006100,"Acute polymorphic psychot disord with symp of schizophren, without associated acute stress (disorder)"
+,1975691000006100,"Acute polymorphic psychot disord with symp of schizophren, with associated acute stress (disorder)"
+,1975711000006100,"Acute schizophrenia-like psychotic disorder, without associated acute stress (disorder)"
+,1975731000006100,"Acute schizophrenia-like psychotic disorder, with associated acute stress (disorder)"
+,1975751000006100,"Other schizophrenia, continuous (disorder)"
+,1975761000006100,"Other acute predominantly delusional psychotic disorders, without associated acute stress (disorder)"
+,1975771000006100,"Other schizophrenia, episodic with progressive deficit (disorder)"
+,1975781000006100,"Other acute predominantly delusional psychotic disorders, with associated acute stress (disorder)"
+,1975801000006100,"Other schizophrenia, episodic with stable deficit (disorder)"
+,1975821000006100,"Other acute and transient psychotic disorders, without associated acute stress (disorder)"
+,1975831000006100,"Other schizophrenia, episodic remittent (disorder)"
+,1975841000006100,"Other schizophrenia, incomplete remission (disorder)"
+,1975851000006100,"Other acute and transient psychotic disorders, with associated acute stress (disorder)"
+,1975871000006100,"Acute and transient psychotic disorder, unspecified, without associated acute stress (disorder)"
+,1975881000006100,"Other schizophrenia, complete remission (disorder)"
+,1975901000006100,"Acute and transient psychotic disorder, unspecified, with associated acute stress (disorder)"
+,1975911000006100,"Other schizophrenia, course uncertain, period of observation too short (disorder)"
+,1976001000006100,"Schizophrenia, unspecified, continuous (disorder)"
+,1976061000006100,"Schizophrenia, unspecified, episodic with progressive deficit (disorder)"
+,1976101000006100,"Schizophrenia, unspecified, episodic with stable deficit (disorder)"
+,1976121000006100,"Schizophrenia, unspecified, episodic remittent (disorder)"
+,1976141000006100,"Schizophrenia, unspecified, incomplete remission (disorder)"
+,1976151000006100,"Schizophrenia, unspecified, complete remission (disorder)"
+,1976171000006100,"Schizophrenia, unspecified, course uncertain, period of observation too short (disorder)"
+,1976881000006100,"Paranoid schizophrenia, other (disorder)"
+,1976891000006100,"Hebephrenic schizophrenia, other (disorder)"
+,1976901000006100,"Catatonic schizophrenia, other (disorder)"
+,1976911000006100,"Undifferentiated schizophrenia, other (disorder)"
+,1976931000006100,"Residual schizophrenia, other (disorder)"
+,1976941000006100,"Simple schizophrenia, other (disorder)"
+,1976951000006100,"Other schizophrenia, other (disorder)"
+,1976961000006100,"Schizophrenia, unspecified, other (disorder)"
+,231437006,Reactive psychoses (disorder)
+,231487004,Persistent delusional disorder (disorder)
+,231489001,Acute transient psychotic disorder (disorder)
+,247804008,Schizophrenic prodrome (disorder)
+,26025008,Residual schizophrenia (disorder)
+,268617001,Acute schizophrenic episode (disorder)
+,270901009,"Schizoaffective disorder, mixed type (disorder)"
+,271428004,"Schizoaffective disorder, manic type (disorder)"
